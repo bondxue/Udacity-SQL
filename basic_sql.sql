@@ -130,12 +130,3 @@ FROM accounts
 WHERE (name LIKE 'C%' OR name LIKE 'W%')
   AND (primary_poc LIKE '%ana%' OR primary_poc LIKE '%Ana%')
   AND primary_poc NOT LIKE '%eana%';
-
-
-
-
-
-
-
-
-
