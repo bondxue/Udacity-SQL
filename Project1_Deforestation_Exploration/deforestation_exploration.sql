@@ -21,7 +21,7 @@ ON l.country_code = r.country_code;
 
 SELECT * FROM forestation;
 
-======================= 1. GLOBAL SITUATION =======================
+------------------------ 1. GLOBAL SITUATION ------------------------
 -- Instructions:
 --
 -- Answering these questions will help you add information into the template.
@@ -44,8 +44,8 @@ SELECT t_1990.region,
        t_2016.forest_area_sqkm forest_area_sqkm_2016
 FROM t_1990, t_2016;
 
+--------------------------------------------------------------
 -- a. What was the total forest area (in sq km) of the world in 1990? Please keep in mind that you can use the country record denoted as “World" in the region table.
-
 SELECT year, region, forest_area_sqkm
 FROM forestation
 WHERE region = 'World' AND year = 1990;
@@ -53,6 +53,7 @@ WHERE region = 'World' AND year = 1990;
 -- year	region	forest_area_sqkm
 -- 1990	World	41282694.9
 
+--------------------------------------------------------------
 -- b. What was the total forest area (in sq km) of the world in 2016? Please keep in mind that you can use the country record in the table is denoted as “World.”
 SELECT year, region, forest_area_sqkm
 FROM forestation
@@ -61,33 +62,35 @@ WHERE region = 'World' AND year = 2016;
 -- year	region	forest_area_sqkm
 -- 2016	World	39958245.9
 
+--------------------------------------------------------------
 -- c. What was the change (in sq km) in the forest area of the world from 1990 to 2016?
-
 SELECT forest_area_sqkm_2016 - forest_area_sqkm_1990 forest_area_change_sqkm
 FROM global_situation;
 
 -- forest_area_change_sqkm
 -- -1324449
 
+--------------------------------------------------------------
 -- d. What was the percent change in forest area of the world between 1990 and 2016?
-
 SELECT (forest_area_sqkm_2016 - forest_area_sqkm_1990)/forest_area_sqkm_1990 *100 forest_area_pct_change_sqkm
 FROM global_situation;
 
 -- forest_area_pct_change_sqkm
 -- -3.20824258980244
 
+--------------------------------------------------------------
 -- e. If you compare the amount of forest area lost between 1990 and 2016, to which country's total area in 2016 is it closest to?
 SELECT f.country_name,
+       f.total_area_sqkm,
        ABS(f.total_area_sqkm - ( g.forest_area_sqkm_1990 - g.forest_area_sqkm_2016)) diff_area
 FROM forestation f, global_situation g
-ORDER BY diff_area
+ORDER BY diff_area ASC
 LIMIT 1;
 
--- country_name	diff_area
--- Peru	44449.0109000001
+-- country_name	total_area_sqkm	diff_area
+-- Peru	1279999.9891	44449.0109000001
 
-======================= 2. REGIONAL OUTLOOK =======================
+------------------------ 2. REGIONAL OUTLOOK ------------------------
 -- Instructions:
 --
 -- Answering these questions will help you add information into the template.
@@ -127,6 +130,7 @@ SELECT * FROM regional_outlook;
 -- World	32.42	31.38
 -- North America	35.65	36.04
 
+--------------------------------------------------------------
 -- a. What was the percent forest of the entire world in 2016? Which region had the HIGHEST percent forest in 2016, and which had the LOWEST, to 2 decimal places?
 
 SELECT region, pct_forest_area_2016
@@ -148,12 +152,14 @@ LIMIT 1;
 SELECT region, pct_forest_area_2016
 FROM regional_outlook
 WHERE region != 'World'
-ORDER BY pct_forest_area_2016
+ORDER BY pct_forest_area_2016 ASC
 LIMIT 1;
 
 -- region	pct_forest_area_2016
 -- Middle East & North Africa	2.07
 
+
+--------------------------------------------------------------
 -- b. What was the percent forest of the entire world in 1990? Which region had the HIGHEST percent forest in 1990, and which had the LOWEST, to 2 decimal places?
 SELECT region, pct_forest_area_1990
 FROM regional_outlook
@@ -174,22 +180,38 @@ LIMIT 1;
 SELECT region, pct_forest_area_1990
 FROM regional_outlook
 WHERE region != 'World'
-ORDER BY pct_forest_area_1990
+ORDER BY pct_forest_area_1990 ASC
 LIMIT 1;
 
 -- region	pct_forest_area_1990
 -- Middle East & North Africa	1.78
 
+
+--------------------------------------------------------------
 -- c. Based on the table you created, which regions of the world DECREASED in forest area from 1990 to 2016?
-SELECT region
+SELECT region, pct_forest_area_1990, pct_forest_area_2016
+FROM regional_outlook;
+
+-- region	pct_forest_area_1990	pct_forest_area_2016
+-- Latin America & Caribbean	51.03	46.16
+-- Sub-Saharan Africa	30.67	28.79
+-- Europe & Central Asia	37.28	38.04
+-- East Asia & Pacific	25.78	26.36
+-- South Asia	16.51	17.51
+-- Middle East & North Africa	1.78	2.07
+-- World	32.42	31.38
+-- North America	35.65	36.04
+
+SELECT region, pct_forest_area_1990, pct_forest_area_2016
 FROM regional_outlook
-WHERE region != 'World' AND pct_forest_area_1990 > pct_forest_area_2016;
+WHERE pct_forest_area_1990 > pct_forest_area_2016;
 
--- region
--- Latin America & Caribbean
--- Sub-Saharan Africa
+-- region	pct_forest_area_1990	pct_forest_area_2016
+-- Latin America & Caribbean	51.03	46.16
+-- Sub-Saharan Africa	30.67	28.79
+-- World	32.42	31.38
 
-======================= 3. COUNTRY-LEVEL DETAIL=======================
+------------------------ 3. COUNTRY-LEVEL DETAIL ------------------------
 -- Instructions:
 --
 -- Answering these questions will help you add information into the template.
@@ -204,10 +226,11 @@ WITH t_2016 AS (
     FROM forestation
     WHERE year = 2016 AND forest_area_sqkm IS NOT NULL),
 t_1990 AS (
-    SELECT country_name, forest_area_sqkm
+    SELECT country_name, region, forest_area_sqkm
     FROM forestation
     WHERE year = 1990 AND forest_area_sqkm IS NOT NULL)
 SELECT t_1990.country_name,
+       t_1990.region,
        t_1990.forest_area_sqkm forest_area_sqkm_1990,
        t_2016.forest_area_sqkm forest_area_sqkm_2016
 FROM t_1990
@@ -217,20 +240,72 @@ ON t_1990.country_name = t_2016.country_name;
 SELECT * FROM country_detail;
 
 -- a. Which 5 countries saw the largest amount decrease in forest area from 1990 to 2016? What was the difference in forest area for each?
+
+--- SUCCESS STORIES
 SELECT country_name, forest_area_sqkm_2016 - forest_area_sqkm_1990 diff_forest_area
 FROM country_detail
 WHERE country_name != 'World'
-ORDER BY diff_forest_area
+ORDER BY diff_forest_area DESC
 LIMIT 5;
 
+-- country_name	diff_forest_area
+-- China	527229.062
+-- United States	79200
+-- India	69213.9844
+-- Russian Federation	59395
+-- Vietnam	55390
+
+-- LARGEST CONCERNS
+SELECT country_name,
+       region,
+       ROUND(CAST(forest_area_sqkm_2016 - forest_area_sqkm_1990 AS NUMERIC), 2) diff_forest_area
+FROM country_detail
+WHERE country_name != 'World'
+ORDER BY diff_forest_area ASC
+LIMIT 5;
+
+-- country_name	region	diff_forest_area
+-- Brazil	Latin America & Caribbean	-541510.00
+-- Indonesia	East Asia & Pacific	-282193.98
+-- Myanmar	East Asia & Pacific	-107234.00
+-- Nigeria	Sub-Saharan Africa	-106506.00
+-- Tanzania	Sub-Saharan Africa	-102320.00
+
+--------------------------------------------------------------
 -- b. Which 5 countries saw the largest percent decrease in forest area from 1990 to 2016? What was the percent change to 2 decimal places for each?
+
+--- SUCCESS STORIES
 SELECT country_name,
        ROUND(CAST((forest_area_sqkm_2016 - forest_area_sqkm_1990) / forest_area_sqkm_1990 AS NUMERIC) * 100, 2) forest_area_pct_change
 FROM country_detail
 WHERE country_name != 'World'
-ORDER BY forest_area_pct_change
+ORDER BY forest_area_pct_change DESC
 LIMIT 5;
 
+-- country_name	forest_area_pct_change
+-- Iceland	213.66
+-- French Polynesia	181.82
+-- Bahrain	177.27
+-- Uruguay	134.11
+-- Dominican Republic	82.46
+
+-- LARGEST CONCERNS
+SELECT country_name,
+       region,
+       ROUND(CAST((forest_area_sqkm_2016 - forest_area_sqkm_1990) / forest_area_sqkm_1990 AS NUMERIC) * 100, 2) forest_area_pct_change
+FROM country_detail
+WHERE country_name != 'World'
+ORDER BY forest_area_pct_change ASC
+LIMIT 5;
+
+-- country_name	region	forest_area_pct_change
+-- Togo	Sub-Saharan Africa	-75.45
+-- Nigeria	Sub-Saharan Africa	-61.80
+-- Uganda	Sub-Saharan Africa	-59.13
+-- Mauritania	Sub-Saharan Africa	-46.75
+-- Honduras	Latin America & Caribbean	-45.03
+
+--------------------------------------------------------------
 -- c. If countries were grouped by percent forestation in quartiles, which group had the most countries in it in 2016?
 WITH t_quartile AS (
     SELECT country_name, CASE WHEN pct_forest <= 25 THEN '0-25%'
@@ -242,31 +317,33 @@ WITH t_quartile AS (
     WHERE pct_forest IS NOT NULL AND country_name != 'World' AND year = 2016)
 SELECT quartile, COUNT(country_name)
 FROM t_quartile
-GROUP BY quartile;
+GROUP BY quartile
+ORDER BY quartile ASC;
 
 -- quartile	count
--- 25-50%	72
--- 75-100%	9
 -- 0-25%	85
+-- 25-50%	72
 -- 50-75%	38
+-- 75-100%	9
 
+--------------------------------------------------------------
 -- d. List all of the countries that were in the 4th quartile (percent forest > 75%) in 2016.
 
-SELECT country_name, pct_forest
+SELECT country_name, ROUND(CAST(pct_forest AS NUMERIC), 2) pct_forest
 FROM forestation
 WHERE pct_forest > 75 AND country_name != 'World' AND year = 2016;
 
 -- country_name	pct_forest
--- American Samoa	87.5000875000875
--- Micronesia, Fed. Sts.	91.8572390715248
--- Gabon	90.0376418700565
--- Guyana	83.9014489110682
--- Lao PDR	82.1082317640861
--- Palau	87.6068085491204
--- Solomon Islands	77.8635177945066
--- Suriname	98.2576939676578
--- Seychelles	88.4111367385789
-
+-- American Samoa	87.50
+-- Micronesia, Fed. Sts.	91.86
+-- Gabon	90.04
+-- Guyana	83.90
+-- Lao PDR	82.11
+-- Palau	87.61
+-- Solomon Islands	77.86
+-- Suriname	98.26
+-- Seychelles	88.41
+--------------------------------------------------------------
 -- e. How many countries had a percent forestation higher than the United States in 2016?
 SELECT COUNT(country_name) country_num
 FROM forestation
