@@ -343,6 +343,7 @@ WHERE pct_forest > 75 AND country_name != 'World' AND year = 2016;
 -- Solomon Islands	77.86
 -- Suriname	98.26
 -- Seychelles	88.41
+
 --------------------------------------------------------------
 -- e. How many countries had a percent forestation higher than the United States in 2016?
 SELECT COUNT(country_name) country_num
