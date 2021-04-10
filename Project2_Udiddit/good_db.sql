@@ -75,9 +75,64 @@ CREATE TABLE votes
 );
 
 ----------------- Part III: Migrate the provided data -----------------
+----------------TOPICS------------------
 
 INSERT INTO topics(topic_name)
 SELECT DISTINCT topic
 FROM bad_posts;
 
+---------------USERS-------------------
 
+INSERT INTO users(username)
+SELECT DISTINCT username
+FROM bad_posts
+UNION
+SELECT DISTINCT username
+FROM bad_comments
+UNION
+SELECT DISTINCT REGEXP_SPLIT_TO_TABLE(upvotes, ',')
+FROM bad_posts
+UNION
+SELECT DISTINCT REGEXP_SPLIT_TO_TABLE(downvotes, ',')
+FROM bad_posts;
+
+----------------POSTS------------------
+
+INSERT INTO posts (post_title, url, text_content, topic_id, user_id)
+SELECT LEFT(bp.title, 100),
+       LEFT(bp.url, 200),
+       bp.text_content,
+       t.id,
+       u.id
+FROM users u
+         JOIN bad_posts bp
+              ON bp.username = u.username
+         JOIN topics t
+              ON bp.topic = t.topic_name;
+
+---------------COMMENTS-------------------
+
+INSERT INTO comments (text_content, post_id, user_id)
+SELECT bc.text_content, p.id, u.id
+FROM users u
+         JOIN bad_comments bc ON bc.username = u.username
+         JOIN posts p ON bc.post_id = p.id;
+
+---------------VOTES----------------------
+
+INSERT INTO votes (post_id, user_id, vote)
+SELECT bp_up.id,
+       u.id,
+       1 AS vote_up
+FROM (SELECT id, REGEXP_SPLIT_TO_TABLE(upvotes, ',') AS upvote_users
+      FROM bad_posts) bp_up
+         JOIN users u
+              ON u.username = bp_up.upvote_users
+UNION
+SELECT bp_down.id,
+       u.id,
+       -1 AS vote_down
+FROM (SELECT id, REGEXP_SPLIT_TO_TABLE(downvotes, ',') AS downvote_users
+      FROM bad_posts) bp_down
+         JOIN users u
+              ON u.username = bp_down.downvote_users;
